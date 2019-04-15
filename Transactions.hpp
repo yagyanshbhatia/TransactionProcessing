@@ -13,6 +13,7 @@ public:
 	void PossibleChains();  // to find all possible chains
 	void isRecoverable();  // to check whether schedule is recoverable or not
 	void isCascadeless();  // to check whether schedule is cascadeless or not
+	void isConflictSerialisable(); 
 
 
 private:
