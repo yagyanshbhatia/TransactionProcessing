@@ -35,7 +35,7 @@ void Transactions::PossibleChains(){
         int DataItem=transaction[i].second.second;
 
         for(int j=i+1; j<transaction.size(); j++){
-            if(transaction[j].second.second!=DataItem)
+            if(transaction[j].second.second!=DataItem || transaction[i].first == transaction[j].first)
                 continue;
             if(transaction[j].second.first=='R'){
             	if(temp.size()==0)
