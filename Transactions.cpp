@@ -195,9 +195,9 @@ void freeResources(map<int,set<int>> &graph, map<int,int> &lock, int id){
             for(auto g: graph){
                 if(g.second.find(resource) != g.second.end()){
                     lock[resource] = g.first;
-                    g.second.erase(resource);
+                    graph[g.first].erase(resource);
                     graph[resource].insert(g.first);
-                    cout<<" and given to "<<g.first;
+                    cout<<" and given to "<<g.first<<" and erased " <<resource<<" from "<<g.first;
                     break;  
                 }
             }
@@ -231,6 +231,7 @@ void Transactions::isDeadlockFree(){
 
         if(opt == 'C'){
             //free all the resources, change graph AND lock.
+            cout<<i<<" "<<id<<endl; 
             freeResources(graph, lock, id);
             continue;
         }
