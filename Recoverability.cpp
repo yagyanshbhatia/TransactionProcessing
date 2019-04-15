@@ -17,7 +17,9 @@ int main(){
 
 	obj.isCascadeless(); // to check whether schedule is cascadeless or not 
 
-	obj.isConflictSerialisable();
+	// obj.isConflictSerialisable();
+
+	obj.isDeadlockFree();
 
 	return 0;
 

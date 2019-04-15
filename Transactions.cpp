@@ -149,3 +149,111 @@ void Transactions::isConflictSerialisable(){
         cout<<endl;
     }
 }
+
+
+int dfs_utility_deadlock(map<int, set<int>> v, map<int,int> &visited, int i){
+    visited[i] = 1;
+    //do the actual dfs
+    bool x = 1;
+    for(auto f: v[i]){
+        if(visited[f] == 1) return 0; // return 0 when found a cycle
+        x = dfs_utility_deadlock(v, visited, f);
+    }
+    visited[i] = 2;
+    return x;
+}
+
+int dfs_deadlock(map<int, set<int>> v){
+    int n = v.size();
+
+    map<int,int> visited;
+    for(auto f: v) visited[f.first] = 0;
+
+    bool no_cycle = 1;
+    for (auto f : visited)
+    {
+        if(f.second == 0){
+            // 0 = white, 1 = grey, 2 = black
+            no_cycle = dfs_utility_deadlock(v, visited, f.first);
+            if(!no_cycle) break;
+        }
+    }
+    return no_cycle;
+}
+
+void freeResources(map<int,set<int>> &graph, map<int,int> &lock, int id){
+    //all locks aquired by id, set free
+    set<int> empty;
+    for(auto f: lock){
+        if(f.second == id) {
+            lock[f.first] = -1;
+            //free adjacency list and allocate next of that resource in graph
+            int resource = f.first;
+            graph[resource] = empty;
+            cout<<"Freed resource "<<resource;
+            //traverse graph and allocate to the first node that wants the freed resource. 
+            for(auto g: graph){
+                if(g.second.find(resource) != g.second.end()){
+                    lock[resource] = g.first;
+                    g.second.erase(resource);
+                    graph[resource].insert(g.first);
+                    cout<<" and given to "<<g.first;
+                    break;  
+                }
+            }
+            cout<<endl;
+        }
+    }
+    //If the transaction is being committed, it must not have any request edges. So just delete it from the graph.
+    graph[id] = empty;
+}
+
+void Transactions::isDeadlockFree(){
+    //make a ds to store which resource is occupied by whom (or none)
+    map<int,int> lock;
+    for (int i = 0; i < transaction.size(); ++i)
+        lock[transaction[i].second.second] = -1; //initialise all of them as free. 
+
+    map<int,set<int>> graph;
+    set<int> empty;
+    for (int i = 0; i < transaction.size(); ++i){
+        graph[transaction[i].first] = empty;
+        graph[transaction[i].second.second] = empty;
+    }
+
+    //for all entries in transaction, add an edge in the resource allocation graph and check at this stage if a cycle is found
+    //and realease all the resource occupied by a transaction when you encounter its commit.  
+    for (int i = 0; i < transaction.size(); ++i)
+    {
+        char opt = transaction[i].second.first;
+        int resource = transaction[i].second.second;
+        int id = transaction[i].first;
+
+        if(opt == 'C'){
+            //free all the resources, change graph AND lock.
+            freeResources(graph, lock, id);
+            continue;
+        }
+
+        if(lock[resource] == id)continue;
+
+        //add the required edge (allocation / request) in the graph
+        if(lock[resource] == -1){
+            //resource was available, so allocate if opt is W
+            if(opt == 'W'){
+                lock[resource] = id;
+                graph[resource].insert(id);
+            }
+        }else{
+            //add a request edge
+            graph[id].insert(resource);
+        }
+        //check for cycle, if found, deadlock
+        if(!dfs_deadlock(graph)){
+            cout<<"deadlock found !"<<endl;
+            return ;
+        }
+    }
+    cout<<"No deadlock"<<endl;
+    return;
+}

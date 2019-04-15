@@ -14,6 +14,7 @@ public:
 	void isRecoverable();  // to check whether schedule is recoverable or not
 	void isCascadeless();  // to check whether schedule is cascadeless or not
 	void isConflictSerialisable(); 
+	void isDeadlockFree();
 
 
 private:
