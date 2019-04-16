@@ -10,7 +10,7 @@ void Transactions::readInput(){
     while(cin>>Tid){
         cin>>Opr;
         if(Opr!='C')
-            cin>>DataItem;
+            {cin>>DataItem; DataItem*=111;}
         else{
             commit[Tid]=transaction.size();
         }
@@ -89,19 +89,20 @@ void Transactions::isCascadeless(){
     cout<<"Yes - cascadeless"<<endl;
 }
 
-int dfs_utility(vector<set<int>> v, int * visited, int i){
+int dfs_utility(vector<set<int>> v, int * visited, int i, vector<int> &schedule){
+    if(!visited[i])schedule.push_back(i);
     visited[i] = 1;
     //do the actual dfs
     bool x = 1;
     for(auto f: v[i]){
         if(visited[f] == 1) return 0; // return 0 when found a cycle
-        x = dfs_utility(v, visited, f);
+        x = dfs_utility(v, visited, f, schedule);
     }
     visited[i] = 2;
     return x;
 }
 
-int dfs(vector<set<int>> v){
+int dfs(vector<set<int>> v, vector<int> &schedule){
     int n = v.size();
     int visited[n] = {0};
     bool no_cycle = 1;
@@ -109,7 +110,7 @@ int dfs(vector<set<int>> v){
     {
         if(visited[i] == 0){
             // 0 = white, 1 = grey, 2 = black
-            no_cycle = dfs_utility(v, visited, i);
+            no_cycle = dfs_utility(v, visited, i, schedule);
             if(!no_cycle) break;
         }
     }
@@ -137,9 +138,15 @@ void Transactions::isConflictSerialisable(){
             }
     }
     // checck for cycle dfs
-    int no_cycle = dfs(v);
+    vector<int> schedule;
+    int no_cycle = dfs(v, schedule);
     if(no_cycle) cout<<"conflict serializable"<<endl;
     else cout<<"Not conflict serializable"<<endl;
+    if(no_cycle){
+        cout<<"serial schedule : ";
+        for(int i=1; i<schedule.size(); i++) cout<<schedule[i]<<" ";
+        cout<<endl;
+    }
     for (int i = 0; i < v.size(); ++i)
     {   
         cout<<i<<" : ";
@@ -208,6 +215,17 @@ void freeResources(map<int,set<int>> &graph, map<int,int> &lock, int id){
     graph[id] = empty;
 }
 
+void printGraph(map<int, set<int>> m){
+    for(auto f: m){
+        cout<<f.first<<" : ";
+        for(auto g: f.second){
+            cout<<g<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl;
+}
+
 void Transactions::isDeadlockFree(){
     //make a ds to store which resource is occupied by whom (or none)
     map<int,int> lock;
@@ -231,7 +249,6 @@ void Transactions::isDeadlockFree(){
 
         if(opt == 'C'){
             //free all the resources, change graph AND lock.
-            cout<<i<<" "<<id<<endl; 
             freeResources(graph, lock, id);
             continue;
         }
@@ -249,6 +266,8 @@ void Transactions::isDeadlockFree(){
             //add a request edge
             graph[id].insert(resource);
         }
+        
+        // printGraph(graph);
         //check for cycle, if found, deadlock
         if(!dfs_deadlock(graph)){
             cout<<"deadlock found !"<<endl;
